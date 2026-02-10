@@ -1,5 +1,5 @@
 from asyncio import Task
-from app.model.task import TaskModel
+from app.models.task import TaskModel
 
 
 def to_domain(model: TaskModel) -> Task:
