@@ -12,6 +12,7 @@ venv/
 .env/
 .env.*
 .venv/
+.env
 
 # =========================
 # FastAPI / Uvicorn
