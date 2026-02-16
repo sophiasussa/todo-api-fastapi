@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
 from app.models.task import TaskModel
-from app.schemas.task import TaskCreate, TaskUpdate, Task
+from app.schemas.task import TaskCreate, TaskUpdate, TaskResponse
 from app.exceptions.task import (
     InvalidTaskStateError,
     TaskNotFoundError,
@@ -83,8 +83,8 @@ def delete_task(db: Session, task_id: int) -> None:
     db.commit()
 
 
-def to_domain(model: TaskModel) -> Task:
-    return Task(
+def to_domain(model: TaskModel) -> TaskResponse:
+    return TaskResponse(
         id=model.id,
         title=model.title,
         done=model.done,
