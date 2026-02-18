@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class TaskCreate(BaseModel):
@@ -49,11 +49,7 @@ class TaskResponse(BaseModel):
     title: str
     done: bool
 
-    class Config:
-        """
-        Pydantic configuration.
-
-        Enables compatibility with ORM models, allowing
-        SQLAlchemy objects to be returned directly from services.
-        """
-        from_attributes = True
+    # Pydantic configuration:
+    # Enables compatibility with ORM models, allowing
+    # SQLAlchemy objects to be returned directly from services.
+    model_config = ConfigDict(from_attributes=True)

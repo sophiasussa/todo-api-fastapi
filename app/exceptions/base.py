@@ -1,6 +1,3 @@
-from app.exceptions.base import AppError
-
-
 class AppError(Exception):
     """
     Base application exception for business and validation errors.
