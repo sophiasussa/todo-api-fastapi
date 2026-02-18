@@ -6,7 +6,6 @@ from app.routes.task import router as tasks_router
 
 app = FastAPI(title="Todo API")
 
-app = FastAPI()
 @app.get("/")
 def root():
     return {"status": "ok"}
