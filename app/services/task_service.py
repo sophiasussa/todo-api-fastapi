@@ -10,6 +10,19 @@ from app.exceptions.task import (
 
 
 def get_task(db: Session, task_id: int) -> TaskModel:
+    """
+    Retrieve a task by its identifier.
+
+    Args:
+        db (Session): Active SQLAlchemy database session.
+        task_id (int): Identifier of the task to be retrieved.
+
+    Raises:
+        TaskNotFoundError: If no task with the given ID exists.
+
+    Returns:
+        TaskModel: The task ORM model.
+    """
     task = db.query(TaskModel).filter(TaskModel.id == task_id).first()
 
     if not task:
@@ -19,6 +32,16 @@ def get_task(db: Session, task_id: int) -> TaskModel:
 
 
 def create_task(db: Session, data: TaskCreate) -> TaskModel:
+    """
+    Create a new task.
+
+    Args:
+        db (Session): Active SQLAlchemy database session.
+        data (TaskCreate): Data required to create the task.
+
+    Returns:
+        TaskModel: The newly created task ORM model.
+    """
     task = TaskModel(
         title=data.title,
         done=False,
@@ -32,6 +55,17 @@ def create_task(db: Session, data: TaskCreate) -> TaskModel:
 
 
 def list_tasks(db: Session, done: bool | None = None) -> list[TaskModel]:
+    """
+    List tasks, optionally filtered by completion status.
+
+    Args:
+        db (Session): Active SQLAlchemy database session.
+        done (bool | None): Optional filter to return only
+            completed or uncompleted tasks.
+
+    Returns:
+        list[TaskModel]: List of task ORM models.
+    """
     query = db.query(TaskModel)
 
     if done is not None:
@@ -41,6 +75,20 @@ def list_tasks(db: Session, done: bool | None = None) -> list[TaskModel]:
 
 
 def complete_task(db: Session, task_id: int) -> TaskModel:
+    """
+    Mark a task as completed.
+
+    Args:
+        db (Session): Active SQLAlchemy database session.
+        task_id (int): Identifier of the task to be completed.
+
+    Raises:
+        TaskNotFoundError: If the task does not exist (raised by get_task).
+        TaskAlreadyCompletedError: If the task is already completed.
+
+    Returns:
+        TaskModel: The updated task ORM model.
+    """
     task = get_task(db, task_id)
 
     if task.done:
@@ -58,6 +106,25 @@ def update_task(
     task_id: int,
     data: TaskUpdate,
 ) -> TaskModel:
+    """
+    Update an existing task.
+
+    Supports partial updates. Business rules are enforced
+    to prevent invalid state transitions.
+
+    Args:
+        db (Session): Active SQLAlchemy database session.
+        task_id (int): Identifier of the task to be updated.
+        data (TaskUpdate): Fields to be updated.
+
+    Raises:
+        TaskNotFoundError: If the task does not exist (raised by get_task).
+        InvalidTaskStateError: If an invalid state transition
+            is attempted.
+
+    Returns:
+        TaskModel: The updated task ORM model.
+    """
     task = get_task(db, task_id)
 
     if task.done and data.done is False:
@@ -77,6 +144,16 @@ def update_task(
 
 
 def delete_task(db: Session, task_id: int) -> None:
+    """
+    Delete a task.
+
+    Args:
+        db (Session): Active SQLAlchemy database session.
+        task_id (int): Identifier of the task to be deleted.
+
+    Raises:
+        TaskNotFoundError: If the task does not exist (raised by get_task).
+    """
     task = get_task(db, task_id)
 
     db.delete(task)
@@ -84,6 +161,18 @@ def delete_task(db: Session, task_id: int) -> None:
 
 
 def to_domain(model: TaskModel) -> TaskResponse:
+    """
+    Convert a Task ORM model into a response schema.
+
+    This function isolates the mapping between persistence
+    models and API response models.
+
+    Args:
+        model (TaskModel): Task ORM model.
+
+    Returns:
+        TaskResponse: Serialized task representation.
+    """
     return TaskResponse(
         id=model.id,
         title=model.title,

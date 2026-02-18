@@ -1,14 +1,27 @@
 services:
   api:
+    # Build the FastAPI application image from the local Dockerfile
     build: .
+
+    # Expose the API to the host machine
     ports:
       - "8000:8000"
+
+    # Ensure the database container is started before the API
     depends_on:
       - db
+
     environment:
+      # Database connection string used by SQLAlchemy and Alembic
       DATABASE_URL: ${DATABASE_URL}
+
+    # Mount the project source code into the container
+    # Useful for development (live reload and easier debugging)
     volumes:
       - .:/app
+
+    # Run database migrations before starting the API server
+    # This guarantees the schema is always up to date on startup
     command: >
       sh -c "
       alembic upgrade head &&
@@ -16,16 +29,26 @@ services:
       "
 
   db:
+    # Official PostgreSQL image
     image: postgres:16
+
+    # Always restart the database container if it crashes
     restart: always
+
     environment:
+      # Database credentials and name
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
+
+    # Expose PostgreSQL to the host (e.g. pgAdmin or psql)
     ports:
       - "5432:5432"
+
+    # Persist database data across container restarts
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
 volumes:
+  # Named volume used to persist PostgreSQL data
   postgres_data:
