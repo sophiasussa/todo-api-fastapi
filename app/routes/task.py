@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Body, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.database.dependencies import get_db
@@ -76,7 +76,7 @@ def get_task(
 @router.put("/{task_id}", response_model=TaskResponse)
 def update_task(
     task_id: int,
-    data: TaskUpdate,
+    data: TaskUpdate = Body(default=None),
     db: Session = Depends(get_db),
 ):
     """

@@ -14,6 +14,7 @@ services:
     environment:
       # Database connection string used by SQLAlchemy and Alembic
       DATABASE_URL: ${DATABASE_URL}
+      TEST_DATABASE_URL: ${TEST_DATABASE_URL}
 
     # Mount the project source code into the container
     # Useful for development (live reload and easier debugging)
@@ -52,3 +53,4 @@ services:
 volumes:
   # Named volume used to persist PostgreSQL data
   postgres_data:
+

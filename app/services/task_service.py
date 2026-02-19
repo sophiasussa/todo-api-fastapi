@@ -104,7 +104,7 @@ def complete_task(db: Session, task_id: int) -> TaskModel:
 def update_task(
     db: Session,
     task_id: int,
-    data: TaskUpdate,
+    data: TaskUpdate | None,
 ) -> TaskModel:
     """
     Update an existing task.
@@ -126,6 +126,9 @@ def update_task(
         TaskModel: The updated task ORM model.
     """
     task = get_task(db, task_id)
+
+    if data is None:
+        return task
 
     if task.done and data.done is False:
         raise InvalidTaskStateError(

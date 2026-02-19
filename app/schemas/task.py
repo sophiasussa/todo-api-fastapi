@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class TaskCreate(BaseModel):
@@ -15,6 +15,13 @@ class TaskCreate(BaseModel):
         max_length=100,
         description="Title of the task"
     )
+
+    @field_validator("title")
+    @classmethod
+    def title_cannot_be_blank(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("title cannot be blank")
+        return v
 
 
 class TaskUpdate(BaseModel):
