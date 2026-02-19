@@ -1,7 +1,8 @@
 import pytest
 NON_EXISTENT_ID = 999
 
-@pytest.mark.integration
+pytestmark = pytest.mark.integration
+
 def test_create_task(client):
     response = client.post("/tasks/", json={"title": "Estudar FastAPI"})
 
@@ -12,7 +13,6 @@ def test_create_task(client):
     assert "id" in data
 
 
-@pytest.mark.integration
 @pytest.mark.parametrize(
     "title",
     ["", "a", "ab", " " * 5, "a" * 200],
@@ -21,7 +21,6 @@ def test_create_task_invalid_titles(client, title):
     response = client.post("/tasks/", json={"title": title})
     assert response.status_code == 422
 
-@pytest.mark.integration
 def test_complete_task_already_completed(client):
     task = client.post("/tasks/", json={"title": "Teste"}).json()
 
@@ -31,21 +30,18 @@ def test_complete_task_already_completed(client):
     assert response.status_code == 400
     assert response.json()["error_code"] == "TASK_ALREADY_COMPLETED"
 
-@pytest.mark.integration
 def test_get_task_not_found(client):
     response = client.get(f"/tasks/{NON_EXISTENT_ID}")
 
     assert response.status_code == 404
     assert response.json()["error_code"] == "TASK_NOT_FOUND"
 
-@pytest.mark.integration
 def test_delete_task_not_found(client):
     response = client.delete(f"/tasks/{NON_EXISTENT_ID}")
 
     assert response.status_code == 404
     assert response.json()["error_code"] == "TASK_NOT_FOUND"
 
-@pytest.mark.integration
 def test_list_tasks_filters_only_completed_when_done_true(client):
     t1 = client.post("/tasks/", json={"title": "Task A"}).json()
     client.post("/tasks/", json={"title": "Task B"})
@@ -59,7 +55,6 @@ def test_list_tasks_filters_only_completed_when_done_true(client):
     assert data[0]["id"] == t1["id"]
     assert data[0]["done"] is True
 
-@pytest.mark.integration
 @pytest.mark.parametrize(
     "done_value,expected_count",
     [
@@ -77,7 +72,6 @@ def test_list_tasks_filtered(client, done_value, expected_count):
     assert response.status_code == 200
     assert len(response.json()) == expected_count
 
-@pytest.mark.integration
 def test_problem_details_format(client):
     task = client.post("/tasks/", json={"title": "RFC"}).json()
 
@@ -94,7 +88,6 @@ def test_problem_details_format(client):
     assert data["instance"] == f"/tasks/{task['id']}/complete"
     assert data["error_code"] == "TASK_ALREADY_COMPLETED"
 
-@pytest.mark.integration
 @pytest.mark.parametrize(
     "method,url",
     [

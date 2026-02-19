@@ -1,4 +1,7 @@
 import pytest
+
+pytestmark = pytest.mark.unit
+
 from app.services.task_service import create_task, complete_task
 from app.exceptions.task import TaskAlreadyCompletedError
 from app.models.task import TaskModel
