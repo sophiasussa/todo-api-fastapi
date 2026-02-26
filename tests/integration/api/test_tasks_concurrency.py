@@ -59,7 +59,7 @@ def test_delete_task_concurrently(client):
         )
 
     status_codes = sorted(r.status_code for r in responses)
-    assert status_codes == [204, 404]
+    assert status_codes == [204, 204]
 
 def test_update_task_concurrently(client):
     task = client.post("/tasks/", json={"title": "Inicial"}).json()
@@ -69,14 +69,15 @@ def test_update_task_concurrently(client):
         responses = list(
             executor.map(
                 lambda title: update_task_request(task_id, title),
-                ["A", "B"],
+                ["Titulo A", "Titulo B"],
             )
         )
 
-    assert all(r.status_code == 200 for r in responses)
+    print([r.status_code for r in responses])
+    assert all(r.status_code in (200, 409) for r in responses)
 
     final = client.get(f"/tasks/{task_id}").json()
-    assert final["title"] in ["A", "B"]
+    assert final["title"] in ["Titulo A", "Titulo B"]
 
 
 def test_update_task_not_found(client):

@@ -67,21 +67,26 @@ def db_session():
 
 
 @pytest.fixture(autouse=True)
-def clean_db(db_session):
-    db_session.execute(
-        text("TRUNCATE TABLE tasks RESTART IDENTITY CASCADE")
-    )
-    db_session.commit()
-    yield
+def clean_db():
+    db = TestingSessionLocal()
+    try:
+        db.execute(text("TRUNCATE TABLE tasks RESTART IDENTITY CASCADE"))
+        db.commit()
+    finally:
+        db.close()
 
 # ======================================================
 # FastAPI TestClient com override de dependência
 # ======================================================
 
 @pytest.fixture(scope="function")
-def client(db_session):
+def client():
     def override_get_db():
-        yield db_session
+        db = TestingSessionLocal()
+        try:
+            yield db
+        finally:
+            db.close()
 
     app.dependency_overrides[get_db] = override_get_db
 
