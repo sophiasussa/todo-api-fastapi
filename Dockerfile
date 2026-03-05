@@ -18,4 +18,4 @@ COPY . .
 
 # Start the FastAPI application using Uvicorn
 # The server listens on all interfaces to allow external access
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000
