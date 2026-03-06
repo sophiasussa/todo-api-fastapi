@@ -1,13 +1,16 @@
-# 📝 Todo API – FastAPI
+# Todo API – FastAPI
 
 [![CI](https://github.com/sophiasussa/todo-api-fastapi/actions/workflows/ci.yml/badge.svg)](https://github.com/sophiasussa/todo-api-fastapi/actions)
 [![codecov](https://codecov.io/gh/sophiasussa/todo-api-fastapi/branch/main/graph/badge.svg)](https://codecov.io/gh/sophiasussa/todo-api-fastapi)
 
-API REST para gerenciamento de tarefas (**To-do**) desenvolvida com **FastAPI**, focada em boas práticas de backend, testes automatizados e integração contínua.
+REST API for task management built with FastAPI, focusing on backend engineering practices, automated testing, and continuous integration.
+
+Live API Docs (Swagger)
+https://todo-api-latest-82ru.onrender.com/docs
 
 ---
 
-## 🚀 Tecnologias
+## Technologies
 
 * Python 3.11
 * FastAPI
@@ -17,10 +20,11 @@ API REST para gerenciamento de tarefas (**To-do**) desenvolvida com **FastAPI**,
 * Docker
 * GitHub Actions (CI)
 * Codecov
+* Alembic (database migrations)
 
 ---
 
-## 📂 Estrutura do Projeto
+## Project Structure
 
 ```
 app/
@@ -39,21 +43,21 @@ tests/
 
 ---
 
-## 🧪 Testes
+## Testing
 
-O projeto possui dois tipos de testes:
+The project includes two types of automated tests:
 
-* **Unitários**: isolados, rápidos, usando SQLite em memória
-* **Integração**: testam o sistema com PostgreSQL real em um banco de dados teste via Docker
+* **Unit Tests**: fast, isolated and use SQLite in-memory
+* **Integration Tests**: use a real PostgreSQL database and run in an isolated Docker environment
 
-### Rodar testes localmente
+### Run in an isolated Docker environment
 
 ```bash
 pytest -m unit
 pytest -m integration
 ```
 
-### Rodar testes com coverage
+### Run tests with coverage
 
 ```bash
 pytest --cov=app
@@ -61,46 +65,57 @@ pytest --cov=app
 
 ---
 
-## 📊 Coverage
+## Code Coverage
 
-A cobertura de testes é monitorada automaticamente pelo **Codecov**.
+Test coverage is automatically monitored using **Codecov**.
 
-* Coverage mínimo exigido: **70%**
-* Pull Requests falham se o coverage cair abaixo do limite
+* Minimum required coverage: **70%**
+* Pull Requests fail if coverage drops below the threshold.
 
 ---
 
-## 🔄 CI – Integração Contínua
+## CI – Continuous Integration
 
-O pipeline de CI roda automaticamente em:
+A CI pipeline runs automatically using GitHub Actions on:
 
-* Push para `main` ou `develop`
+* Push to `main` or `develop`
 * Pull Requests
 
-Etapas do CI:
+Pipeline steps:
 
-1. Instala dependências
-2. Roda testes unitários
-3. Roda testes de integração
-4. Gera relatório de coverage
-5. Envia dados para o Codecov
+1. Install dependencies
+2. Run unit tests
+3. Run integration tests
+4. Generate coverage report
+5. Upload coverage to Codecov
 
 ---
 
-## ▶️ Executar a API localmente
+## Running the API Locally
 
-A API e o banco de dados PostgreSQL são executados via Docker.
+The API and PostgreSQL database run in containers using Docker Compose.
 
+Start the environment:
 ```bash
 docker compose up -d
 ```
 
-Acesse a documentação interativa em:
+The interactive API documentation will be available at:
 
 http://localhost:8000/docs
 
 ---
 
-## 📄 Licença
+Deployment
 
-Este projeto é apenas para fins de estudo e portfólio.
+The application is deployed using Docker containers on Render.
+
+During container startup:
+ - Database migrations run automatically via Alembic
+ - The FastAPI application is started with Uvicorn
+   
+---
+
+## License
+
+This project was developed for learning and portfolio purposes.
