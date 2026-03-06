@@ -1,127 +1,125 @@
 # Testing Strategy
 
-Este documento descreve a estratégia de testes adotada no projeto, incluindo tipos de testes, princípios arquiteturais, execução e garantias de consistência.
+This document describes the testing strategy adopted in the project, including test types, architectural principles, execution, and consistency guarantees.
 
 ---
 
-## Objetivo
+## Objective
 
-Garantir:
+Ensure:
 
-- Correção das regras de negócio
-- Confiabilidade dos endpoints HTTP
-- Isolamento transacional
-- Segurança contra race conditions
-- Consistência do banco de dados sob concorrência
+- Correctness of business rules
+- Reliability of HTTP endpoints
+- Transactional isolation
+- Protection against race conditions
+- Database consistency under concurrency
 
-A estratégia segue uma abordagem inspirada na **Pirâmide de Testes**, priorizando testes unitários rápidos e complementando com testes de integração e concorrência.
+The strategy follows an approach inspired by the **Testing Pyramid**, prioritizing fast unit tests and complementing them with integration and concurrency tests.
 
 ---
 
-# Tipos de Testes
+# Test Types
 
 ## 1 - Unit Tests (`@pytest.mark.unit`)
 
-Testam regras de negócio de forma isolada.
+Test business rules in isolation.
 
-### Características:
-- Foco em services
-- Não dependem da camada HTTP
-- Validam exceções de domínio
-- Garantem rollback em caso de erro
-- Executam rapidamente
+### Characteristics:
+- Focused on services
+- Do not depend on the HTTP layer
+- Validate domain exceptions
+- Ensure rollback on error
+- Execute quickly
 
-### Exemplos de cenários:
-- Criar task
-- Completar task
-- Impedir completar task já concluída
-- Garantir rollback transacional
+### Example scenarios:
+- Create task
+- Complete task
+- Prevent completing an already completed task
+- Ensure transactional rollback
 
-Executar:
+Run:
 
 pytest -m unit
 
 ## 2 - Integration Tests(`@pytest.mark.integration`)
 
-Testam o fluxo completo da aplicação:
+Test the complete application flow:
 
 HTTP Request → Router → Service → Database → Response
 
-### Características:
+### Characteristics:
+- Use TestClient
+- Validate HTTP contracts
+- Check status codes
+- Validate response structure
+- Confirm database persistence
 
--Utilizam TestClient
--Validam contratos HTTP
--Verificam status codes
--Validam estrutura da resposta
--Confirmam persistência no banco
+### Example scenarios:
+- Create task via endpoint
+- Update task
+- Fetch task
+- 404 errors
+- Standardized error codes
 
-### Exemplos de cenários:
--Criar task via endpoint
--Atualizar task
--Buscar task
--Erros 404
--Códigos de erro padronizados
-
-Executar:
+Run:
 
 pytest -m integration
 
 ## 3 - Concurrency Tests(`@pytest.mark.concurrency`)
 
-Testam o comportamento do sistema sob múltiplas requisições simultâneas.
-Utilizam ThreadPoolExecutor para simular chamadas concorrentes.
+Test system behavior under multiple simultaneous requests. Use ThreadPoolExecutor to simulate concurrent calls.
 
-### Objetivos:
--Garantir atomicidade
--Validar idempotência
--Testar conflitos (409)
--Evitar race conditions
--Garantir isolamento de sessão por request
+### Objectives:
+- Ensure atomicity
+- Validate idempotency
+- Test conflicts (409)
+- Avoid race conditions
+- Ensure per-request session isolation
 
-### Cenários testados:
--Duas requisições tentando completar a mesma task
--Duas requisições tentando deletar a mesma task
--Atualizações concorrentes
--Verificação de sessão isolada por request
+### Tested scenarios:
+- Two requests attempting to complete the same task
+- Two requests attempting to delete the same task
+- Concurrent updates
+- Isolated session verification per request
 
-Executar:
+Run:
 
 pytest -m concurrency
 
-# Isolamento de Banco de Dados
+# Database Isolation
 
-Cada requisição utiliza uma sessão isolada de banco de dados.
+Each request uses an isolated database session.
 
-## Isso garante:
--Segurança em ambiente concorrente
--Rollback automático em exceções
--Independência entre threads
--Consistência transacional
+## This ensures:
+- Safety in concurrent environments
+- Automatic rollback on exceptions
+- Independence between threads
+- Transactional consistency
 
-Os testes validam explicitamente esse comportamento.
+Tests explicitly validate this behavior.
 
-# Garantias Arquiteturais Validadas pelos Testes
--Nenhuma operação crítica é executada duas vezes indevidamente
--Tasks já concluídas não podem ser concluídas novamente
--Atualizações concorrentes resultam em sucesso ou conflito controlado
--Deleções concorrentes não quebram o sistema
--Transações são revertidas em caso de erro
--Cada request usa sessão independente
+# Architectural Guarantees Validated by Tests
+- No critical operation is executed twice without cause
+- Already completed tasks cannot be completed again
+- Concurrent updates result in either success or a controlled conflict
+- Concurrent deletions do not break the system
+- Transactions are rolled back on error
+- Each request uses an independent session
 
-# Executando Todos os Testes
+# Running All Tests
 
 Coverage (opcional)
 
-Para gerar relatório de cobertura:
+To generate a coverage report:
 
 pytest --cov=app --cov-report=term-missing
 
-## Filosofia
+## Philosophy
 
-### Os testes não apenas verificam funcionalidades — eles validam decisões arquiteturais:
--Separação entre camadas
--Segurança transacional
--Tratamento explícito de erros de domínio
--Robustez sob concorrência
+### Tests do not merely verify features — they validate architectural decisions:
+- Separation of concerns between layers
+- Transactional safety
+- Explicit handling of domain errors
+- Robustness under concurrency
 
-O objetivo é manter um backend previsível, seguro e resiliente.
+The goal is to maintain a predictable, secure, and resilient backend.
