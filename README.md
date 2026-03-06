@@ -28,17 +28,17 @@ https://todo-api-latest-82ru.onrender.com/docs
 
 ```
 app/
- ├── exceptions/
- ├── models/
- ├── routes/
- ├── database/
- ├── schemas/
- ├── services/
- └── main.py
+├── routes/        # FastAPI route definitions (API endpoints)
+├── services/      # Business logic and application services
+├── models/        # Database models
+├── schemas/       # Pydantic schemas for request/response validation
+├── database/      # Database configuration and session management
+├── exceptions/    # Custom exception handling
+└── main.py        # FastAPI application entry point
 
 tests/
- ├── unit/
- └── integration/
+├── unit/          # Unit tests
+└── integration/   # Integration tests
 ```
 
 ---
