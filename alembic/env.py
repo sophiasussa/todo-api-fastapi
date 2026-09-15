@@ -33,6 +33,12 @@ database_url = (
     or config.get_main_option("sqlalchemy.url")
 )
 
+database_url = (database_url or "").replace(
+    "+asyncpg", "+psycopg2"
+).replace(
+    "+aiosqlite", ""
+)
+
 if database_url:
     config.set_main_option("sqlalchemy.url", database_url)
 

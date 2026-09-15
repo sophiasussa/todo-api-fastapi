@@ -13,8 +13,8 @@ Key characteristics:
 """
 
 import pytest
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+import pytest_asyncio
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from app.database.base import Base
 
@@ -25,23 +25,22 @@ from app.database.base import Base
 
 # SQLite in-memory database URL.
 # The database exists only during the test execution.
-SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
+SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
 # SQLAlchemy engine for the in-memory database.
 # check_same_thread=False allows multiple sessions/threads,
 # which is required by SQLAlchemy and pytest internals.
-engine = create_engine(
+engine = create_async_engine(
     SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False},
 )
 
 # Session factory used in tests.
 # - autocommit=False: explicit commits only
 # - autoflush=False: full control over when data is flushed
-TestingSessionLocal = sessionmaker(
-    autocommit=False,
+TestingSessionLocal = async_sessionmaker(
     autoflush=False,
     bind=engine,
+    expire_on_commit=False,
 )
 
 
@@ -49,8 +48,8 @@ TestingSessionLocal = sessionmaker(
 # Pytest fixtures
 # ======================================================
 
-@pytest.fixture()
-def db_session():
+@pytest_asyncio.fixture()
+async def db_session():
     """
     Provides an isolated SQLAlchemy session for unit tests.
 
@@ -67,12 +66,11 @@ def db_session():
     - Fast execution using in-memory database
     """
     # Create all tables before the test runs
-    Base.metadata.create_all(bind=engine)
+    async with engine.begin() as connection:
+        await connection.run_sync(Base.metadata.create_all)
 
-    db = TestingSessionLocal()
-    try:
+    async with TestingSessionLocal() as db:
         yield db
-    finally:
-        # Close the session and clean up schema after the test
-        db.close()
-        Base.metadata.drop_all(bind=engine)
+
+    async with engine.begin() as connection:
+        await connection.run_sync(Base.metadata.drop_all)

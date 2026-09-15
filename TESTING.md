@@ -39,7 +39,7 @@ Test business rules in isolation.
 
 Run:
 
-pytest -m unit
+\.venv\Scripts\python.exe -m pytest -m unit
 
 ## 2 - Integration Tests(`@pytest.mark.integration`)
 
@@ -63,7 +63,12 @@ HTTP Request → Router → Service → Database → Response
 
 Run:
 
-pytest -m integration
+PowerShell:
+
+```powershell
+$env:TEST_DATABASE_URL="postgresql://todo:todo@localhost:5432/todo_test"
+.venv\Scripts\python.exe -m pytest -m integration
+```
 
 ## 3 - Concurrency Tests(`@pytest.mark.concurrency`)
 
@@ -84,7 +89,20 @@ Test system behavior under multiple simultaneous requests. Use ThreadPoolExecuto
 
 Run:
 
-pytest -m concurrency
+```powershell
+$env:TEST_DATABASE_URL="postgresql://todo:todo@localhost:5432/todo_test"
+.venv\Scripts\python.exe -m pytest -m concurrency
+```
+
+O PostgreSQL precisa estar disponível antes desses comandos. Com Docker
+Desktop iniciado, configure as variáveis do Compose e execute:
+
+```powershell
+$env:POSTGRES_USER="todo"
+$env:POSTGRES_PASSWORD="todo"
+$env:POSTGRES_DB="todo_test"
+docker compose up -d db
+```
 
 # Database Isolation
 
@@ -112,7 +130,7 @@ Coverage (opcional)
 
 To generate a coverage report:
 
-pytest --cov=app --cov-report=term-missing
+ .venv\Scripts\python.exe -m pytest --cov=app --cov-report=term-missing
 
 ## Philosophy
 

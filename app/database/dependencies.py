@@ -1,8 +1,11 @@
-from sqlalchemy.orm import Session
+from collections.abc import AsyncIterator
+
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.database.session import SessionLocal
 
 
-def get_db() -> Session:
+async def get_db() -> AsyncIterator[AsyncSession]:
     """
     FastAPI dependency responsible for providing a database session.
 
@@ -16,8 +19,8 @@ def get_db() -> Session:
     Yields:
         Session: an active SQLAlchemy session bound to the current request.
     """
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+    async with SessionLocal() as db:
+        try:
+            yield db
+        finally:
+            await db.close()

@@ -1,4 +1,5 @@
-from sqlalchemy.orm import Session
+from sqlalchemy import delete, select, update
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.task import TaskModel
 from app.schemas.task import TaskCreate, TaskUpdate, TaskResponse
@@ -9,7 +10,7 @@ from app.exceptions.task import (
 )
 
 
-def get_task(db: Session, task_id: int) -> TaskModel:
+async def get_task(db: AsyncSession, task_id: int) -> TaskModel:
     """
     Retrieve a task by its identifier.
 
@@ -23,7 +24,10 @@ def get_task(db: Session, task_id: int) -> TaskModel:
     Returns:
         TaskModel: The task ORM model.
     """
-    task = db.query(TaskModel).filter(TaskModel.id == task_id).first()
+    result = await db.execute(
+        select(TaskModel).where(TaskModel.id == task_id)
+    )
+    task = result.scalar_one_or_none()
 
     if not task:
         raise TaskNotFoundError(task_id)
@@ -31,7 +35,7 @@ def get_task(db: Session, task_id: int) -> TaskModel:
     return task
 
 
-def create_task(db: Session, data: TaskCreate) -> TaskModel:
+async def create_task(db: AsyncSession, data: TaskCreate) -> TaskModel:
     """
     Create a new task.
 
@@ -48,13 +52,16 @@ def create_task(db: Session, data: TaskCreate) -> TaskModel:
     )
 
     db.add(task)
-    db.commit()
-    db.refresh(task)
+    await db.commit()
+    await db.refresh(task)
 
     return task
 
 
-def list_tasks(db: Session, done: bool | None = None) -> list[TaskModel]:
+async def list_tasks(
+    db: AsyncSession,
+    done: bool | None = None,
+) -> list[TaskModel]:
     """
     List tasks, optionally filtered by completion status.
 
@@ -66,15 +73,16 @@ def list_tasks(db: Session, done: bool | None = None) -> list[TaskModel]:
     Returns:
         list[TaskModel]: List of task ORM models.
     """
-    query = db.query(TaskModel)
+    query = select(TaskModel)
 
     if done is not None:
-        query = query.filter(TaskModel.done == done)
+        query = query.where(TaskModel.done == done)
 
-    return query.all()
+    result = await db.execute(query)
+    return list(result.scalars().all())
 
 
-def complete_task(db: Session, task_id: int) -> TaskModel:
+async def complete_task(db: AsyncSession, task_id: int) -> TaskModel:
     """
     Mark a task as completed.
 
@@ -89,20 +97,23 @@ def complete_task(db: Session, task_id: int) -> TaskModel:
     Returns:
         TaskModel: The updated task ORM model.
     """
-    task = get_task(db, task_id)
+    result = await db.execute(
+        update(TaskModel)
+        .where(TaskModel.id == task_id, TaskModel.done.is_(False))
+        .values(done=True)
+    )
 
-    if task.done:
-        raise TaskAlreadyCompletedError()
+    if result.rowcount == 0:
+        task = await get_task(db, task_id)
+        if task.done:
+            raise TaskAlreadyCompletedError()
 
-    task.done = True
-    db.commit()
-    db.refresh(task)
-
-    return task
+    await db.commit()
+    return await get_task(db, task_id)
 
 
-def update_task(
-    db: Session,
+async def update_task(
+    db: AsyncSession,
     task_id: int,
     data: TaskUpdate | None,
 ) -> TaskModel:
@@ -125,7 +136,7 @@ def update_task(
     Returns:
         TaskModel: The updated task ORM model.
     """
-    task = get_task(db, task_id)
+    task = await get_task(db, task_id)
 
     if data is None:
         return task
@@ -141,12 +152,12 @@ def update_task(
     if data.done is not None:
         task.done = data.done
 
-    db.commit()
-    db.refresh(task)
+    await db.commit()
+    await db.refresh(task)
     return task
 
 
-def delete_task(db: Session, task_id: int) -> None:
+async def delete_task(db: AsyncSession, task_id: int) -> None:
     """
     Delete a task.
 
@@ -157,10 +168,10 @@ def delete_task(db: Session, task_id: int) -> None:
     Raises:
         TaskNotFoundError: If the task does not exist (raised by get_task).
     """
-    task = get_task(db, task_id)
+    task = await get_task(db, task_id)
 
-    db.delete(task)
-    db.commit()
+    await db.execute(delete(TaskModel).where(TaskModel.id == task_id))
+    await db.commit()
 
 
 def to_domain(model: TaskModel) -> TaskResponse:

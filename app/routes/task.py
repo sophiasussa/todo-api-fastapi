@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Body, Depends, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.dependencies import get_db
 from app.schemas.task import TaskResponse, TaskCreate, TaskUpdate
@@ -9,9 +9,9 @@ router = APIRouter(prefix="/tasks", tags=["Tasks"])
 
 
 @router.post("/", response_model=TaskResponse, status_code=201)
-def create_task(
+async def create_task(
     data: TaskCreate,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Create a new task.
@@ -26,16 +26,16 @@ def create_task(
     Returns:
         TaskResponse: The created task.
     """
-    return task_service.create_task(db, data)
+    return await task_service.create_task(db, data)
 
 
 @router.get("/", response_model=list[TaskResponse])
-def list_tasks(
+async def list_tasks(
     done: bool | None = Query(
         None,
         description="Filter tasks by completion status"
     ),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Retrieve a list of tasks.
@@ -49,13 +49,13 @@ def list_tasks(
     Returns:
         list[TaskResponse]: List of tasks matching the criteria.
     """
-    return task_service.list_tasks(db, done)
+    return await task_service.list_tasks(db, done)
 
 
 @router.get("/{task_id}", response_model=TaskResponse)
-def get_task(
+async def get_task(
     task_id: int,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Retrieve a single task by its identifier.
@@ -70,14 +70,14 @@ def get_task(
     Raises:
         TaskNotFoundError: If the task does not exist.
     """
-    return task_service.get_task(db, task_id)
+    return await task_service.get_task(db, task_id)
 
 
 @router.put("/{task_id}", response_model=TaskResponse)
-def update_task(
+async def update_task(
     task_id: int,
     data: TaskUpdate = Body(default=None),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Update an existing task.
@@ -96,13 +96,13 @@ def update_task(
         TaskNotFoundError: If the task does not exist.
         InvalidTaskStateError: If an invalid state transition is attempted.
     """
-    return task_service.update_task(db, task_id, data)
+    return await task_service.update_task(db, task_id, data)
 
 
 @router.patch("/{task_id}/complete", response_model=TaskResponse)
-def complete_task(
+async def complete_task(
     task_id: int,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Mark a task as completed.
@@ -118,13 +118,13 @@ def complete_task(
         TaskNotFoundError: If the task does not exist.
         TaskAlreadyCompletedError: If the task is already completed.
     """
-    return task_service.complete_task(db, task_id)
+    return await task_service.complete_task(db, task_id)
 
 
 @router.delete("/{task_id}", status_code=204)
-def delete_task(
+async def delete_task(
     task_id: int,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Delete a task by its identifier.
@@ -136,4 +136,4 @@ def delete_task(
     Raises:
         TaskNotFoundError: If the task does not exist.
     """
-    task_service.delete_task(db, task_id)
+    await task_service.delete_task(db, task_id)

@@ -18,14 +18,25 @@ All integration and concurrency tests depend on this configuration.
 
 import os
 import pytest
+import pytest_asyncio
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.pool import NullPool
 from alembic import command
 from alembic.config import Config
 
 from app.main import app
 from app.database.dependencies import get_db
+from app.database.session import async_database_url
+
+TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
+
+if not TEST_DATABASE_URL:
+    pytest.skip(
+        "TEST_DATABASE_URL is required for integration tests",
+        allow_module_level=True,
+    )
 
 
 # ======================================================
@@ -47,9 +58,7 @@ def apply_migrations():
     - The database schema matches production schema
     - Tests run against the real migrated structure
     """
-    db_url = os.getenv("TEST_DATABASE_URL")
-    if not db_url:
-        raise RuntimeError("TEST_DATABASE_URL not set")
+    db_url = TEST_DATABASE_URL
 
     PROJECT_ROOT = os.path.abspath(
         os.path.join(os.path.dirname(__file__), "../../../")
@@ -76,21 +85,27 @@ def apply_migrations():
 # ======================================================
 
 # Engine connected to the real test database
-engine = create_engine(
-    os.environ["TEST_DATABASE_URL"],
+sync_engine = create_engine(
+    TEST_DATABASE_URL,
     pool_pre_ping=True,  # Ensures stale connections are refreshed
 )
 
 # Session factory for integration tests
-TestingSessionLocal = sessionmaker(
-    autocommit=False,
+async_engine = create_async_engine(
+    async_database_url(TEST_DATABASE_URL),
+    pool_pre_ping=True,
+    poolclass=NullPool,
+)
+
+TestingSessionLocal = async_sessionmaker(
+    bind=async_engine,
     autoflush=False,
-    bind=engine,
+    expire_on_commit=False,
 )
 
 
-@pytest.fixture(scope="function")
-def db_session():
+@pytest_asyncio.fixture(scope="function")
+async def db_session():
     """
     Provides a database session for each test function.
 
@@ -101,15 +116,12 @@ def db_session():
 
     It does NOT recreate tables (migrations already applied at session start).
     """
-    db = TestingSessionLocal()
-    try:
+    async with TestingSessionLocal() as db:
         yield db
-    finally:
-        db.close()
 
 
-@pytest.fixture(autouse=True)
-def clean_db():
+@pytest_asyncio.fixture(autouse=True)
+async def clean_db():
     """
     Cleans database state before each test.
 
@@ -120,12 +132,9 @@ def clean_db():
 
     This guarantees test isolation without re-running migrations.
     """
-    db = TestingSessionLocal()
-    try:
-        db.execute(text("TRUNCATE TABLE tasks RESTART IDENTITY CASCADE"))
-        db.commit()
-    finally:
-        db.close()
+    async with TestingSessionLocal() as db:
+        await db.execute(text("TRUNCATE TABLE tasks RESTART IDENTITY CASCADE"))
+        await db.commit()
 
 
 # ======================================================
@@ -148,12 +157,9 @@ def client():
     - Real database interaction
     - Isolation from production configuration
     """
-    def override_get_db():
-        db = TestingSessionLocal()
-        try:
+    async def override_get_db():
+        async with TestingSessionLocal() as db:
             yield db
-        finally:
-            db.close()
 
     # Override the application's database dependency
     app.dependency_overrides[get_db] = override_get_db

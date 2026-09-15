@@ -14,13 +14,19 @@ https://todo-api-latest-82ru.onrender.com/docs
 
 * Python 3.11
 * FastAPI
-* SQLAlchemy
+* SQLAlchemy (asyncio)
 * PostgreSQL
 * Pytest
 * Docker
 * GitHub Actions (CI)
 * Codecov
 * Alembic (database migrations)
+
+The API uses `AsyncSession` and the async PostgreSQL driver (`asyncpg`) for
+request database I/O. `DATABASE_URL` and `TEST_DATABASE_URL` may use the
+usual PostgreSQL URL format; the application converts them to the async
+dialect automatically, while Alembic continues to run migrations through
+the synchronous PostgreSQL driver.
 
 ---
 

@@ -25,7 +25,7 @@ from app.schemas.task import TaskCreate
 
 
 @pytest.mark.parametrize("already_done", [True, False])
-def test_complete_task_service(db_session, already_done):
+async def test_complete_task_service(db_session, already_done):
     """
     Test task completion behavior in the service layer.
 
@@ -37,17 +37,17 @@ def test_complete_task_service(db_session, already_done):
     """
     task = TaskModel(title="Service", done=already_done)
     db_session.add(task)
-    db_session.commit()
+    await db_session.commit()
 
     if already_done:
         with pytest.raises(TaskAlreadyCompletedError):
-            complete_task(db_session, task.id)
+            await complete_task(db_session, task.id)
     else:
-        result = complete_task(db_session, task.id)
+        result = await complete_task(db_session, task.id)
         assert result.done is True
 
 
-def test_create_task_service(db_session):
+async def test_create_task_service(db_session):
     """
     Test task creation through the service layer.
 
@@ -56,7 +56,7 @@ def test_create_task_service(db_session):
     - An ID is generated
     - The task starts with `done = False`
     """
-    task = create_task(
+    task = await create_task(
         db_session,
         TaskCreate(title="Service test")
     )
@@ -66,7 +66,7 @@ def test_create_task_service(db_session):
     assert task.done is False
 
 
-def test_complete_task_transaction_rollback(db_session):
+async def test_complete_task_transaction_rollback(db_session):
     """
     Test transactional rollback behavior when completing a task fails.
 
@@ -81,11 +81,11 @@ def test_complete_task_transaction_rollback(db_session):
     # Task already completed → should raise an exception
     task = TaskModel(title="Rollback", done=True)
     db_session.add(task)
-    db_session.commit()
+    await db_session.commit()
 
     with pytest.raises(TaskAlreadyCompletedError):
-        complete_task(db_session, task.id)
+        await complete_task(db_session, task.id)
 
     # Ensure no state was changed after the exception
-    db_session.refresh(task)
+    await db_session.refresh(task)
     assert task.done is True
